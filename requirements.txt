@@ -1,0 +1,6 @@
+polars
+pandas
+SQLAlchemy
+pymysql
+ftfy
+pyarrow

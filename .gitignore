@@ -1,0 +1,5 @@
+data/
+mysql_data/
+__pycache__/
+.env
+*.pyc
