@@ -1,10 +1,10 @@
 # Proyecto ETL - Histórico Resultados ICFES Saber 11
 
 ## **Descripción**
-El objetivo de este proyecto es caracterizar el perfil socioeconómico de los estudiantes colombianos de educación media según su nivel de desempeño en las pruebas Saber 11 entre 2019 y 2025. A través de un enfoque descriptivo, la metodología contempla la exploración, limpieza y visualización de una base de datos histórica masiva que supera los 4.6 millones de registros. Con ello, se busca identificar las variables socioeconómicas predominantes en cada rango de resultados, así como analizar su evolución temporal a lo me largo del periodo establecido.
+El objetivo de este proyecto es caracterizar el perfil socioeconómico de los estudiantes de educación media del departamento del Valle del Cauca según su nivel de desempeño en las pruebas Saber 11 durante el año 2025. A través de un enfoque descriptivo y una arquitectura de datos escalable, la metodología contempla la extracción, limpieza, transformación y carga (ETL) de un volumen de **661.889 registros**. Con ello, se busca identificar las variables socioeconómicas y el equipamiento tecnológico del hogar predominantes en cada rango de resultados, así como analizar la distribución de estas características y brechas educativas en los distintos municipios de la región.
 
 ## **Justificación del Proyecto**
-El análisis de datos en el sector educativo permite identificar brechas socioeconómicas y evaluar el rendimiento académico en diferentes regiones del país. Sin embargo, los datos abiertos crudos presentan problemas habituales de calidad: errores de codificación de texto (mojibake), inconsistencias en nombres de municipios, valores nulos y registros duplicados. Este proyecto surge de la necesidad de limpiar, estandarizar y modelar esta información bajo un esquema en estrella (Star Schema) optimizado para la consulta rápida y la integración con herramientas de analítica y Business Intelligence (BI).
+El análisis de datos en el sector educativo es fundamental para visibilizar disparidades socioeconómicas y respaldar decisiones de política pública alineadas con el **ODS 4 (Educación de Calidad, Meta 4.5)**. Sin embargo, los microdatos abiertos crudos del ICFES presentan problemas habituales de calidad: errores de codificación de texto (*mojibake*), inconsistencias en nombres de municipios, valores nulos e inscripciones duplicadas. Este proyecto surge de la necesidad de sanear, estandarizar y estructurar esta información bajo un modelo relacional en estrella (*Star Schema*) optimizado para la consulta rápida, la garantía de integridad referencial y la integración directa con herramientas de analítica y Business Intelligence (BI).
 
 ## **Tecnologías Utilizadas**
 * **Python (v3.13+):** Lenguaje base del pipeline de procesamiento.
@@ -37,24 +37,27 @@ El procesamiento transforma el dataset plano original en las siguientes estructu
 ## **Flujo de Trabajo (Pipeline ETL)**
 
 ### 1. Extracción e Inspección Inicial
-* Carga optimizada del conjunto de datos histórico en formato CSV (`df_icfes_historico.csv`).
-* Evaluación dimensional del dataset original: **4,629,768 filas × 94 columnas**.
-* Diagnóstico inicial de nulos y verificación de esquemas (`schema`) sobre el bloque de variables asignadas.
+* Carga optimizada del conjunto de datos en formato CSV (`DB_ICFE2025.csv`).
+* Evaluación dimensional del dataset de origen: **661,889 filas × 94 columnas**.
+* Diagnóstico inicial de nulos y verificación de esquemas (*schema*) sobre el bloque de variables seleccionadas para el análisis socioeconómico y académico.
 
 ### 2. Transformación y Limpieza de Datos
-* **Llaves de negocio:** Conversión a tipo texto (`String`), limpieza de espacios en blanco (`strip_chars`) en `estu_consecutivo` y `cole_codigo_icfes`. Eliminación de sufijos flotantes (`.0`) e imputación de nulos/vacíos por `"SIN INFORMACION"`.
-* **Dimensión Temporal:** Conversión de `periodo` a texto y extracción vectorial de la columna `anio` como entero de 32 bits (`Int32`).
-* **Tratamiento Geográfico (Mojibake & Nulos):** Integración de `ftfy` mediante diccionarios en memoria para corregir problemas de codificación de caracteres en `estu_depto_reside` y `estu_mcpio_reside`. Normalización a mayúsculas e imputación de nulos.
-* **Atributos del Colegio:** Homologación de texto a mayúsculas, unificación de valores categóricos (ej. cambio de `"URBANO"` a `"URBANA"`) e imputación de faltantes en `cole_naturaleza`, `cole_calendario` y `cole_area_ubicacion`.
+* **Llaves de negocio y Centinelas:** Conversión a tipo texto (`String`), limpieza de espacios en blanco (`strip_chars`) en `estu_consecutivo` y `cole_codigo_icfes`. Asignación de valor centinela `-1` a estudiantes de inscripción individual (sin colegio) y a registros socioeconómicos faltantes para preservar la integridad referencial en la base de datos.
+* **Gestión de Duplicados:** Identificación y resolución de inscripciones dobles sobre la clave de negocio `estu_consecutivo`, priorizando la retención del registro vinculado a una institución educativa sobre el registro de inscripción individual.
+* **Tratamiento Geográfico (Mojibake & Nulos):** Integración de `ftfy` para corregir problemas de codificación de caracteres en `estu_depto_reside` y `estu_mcpio_reside`. Normalización a mayúsculas e imputación de valores faltantes.
+* **Atributos del Colegio:** Homologación de texto a mayúsculas, unificación de valores categóricos (ej. cambio de `"URBANO"` a `"URBANA"`) e imputación de nulos en `cole_naturaleza`, `cole_calendario` y `cole_area_ubicacion`.
+* **Dimensión Socioeconómica:** Estandarización de variables del entorno familiar (`fami_estratovivienda`, `fami_tieneinternet`, `fami_tienecomputador`, `fami_educacionpadre`, `fami_educacionmadre`) e imputación sistemática con `"SIN INFORMACION"`.
+* **Casteo de Métricas y Tiempo:** Extracción vectorial de la columna `anio` (`Int32`), formateo numérico entero (`Int64`) para los puntajes por asignatura/global y casteo a flotante (`Float64`) para el Índice Socioeconómico Individual (`estu_inse_individual`).
 
 ### 3. Control e Inspección de Duplicados
-* Evaluación de unicidad sobre la llave primaria `estu_consecutivo`.
-* Inspección y filtrado de registros duplicados en pantalla mediante `is_duplicated()`.
-* Deduplicación conservando la primera aparición válida (`keep="first"`), reduciendo el conjunto de datos de **4,629,768 a 4,629,766 registros únicos**.
+* **Evaluación de Unicidad:** Escaneo estricto sobre la clave de negocio `estu_consecutivo` mediante expresiones vectoriales en Polars (`is_duplicated()`).
+* **Criterio de Deduplicación:** Eliminación de inscripciones dobles en el mismo periodo para evitar el sesgo en el cálculo de métricas socioeconómicas (INSE, estrato) y la duplicación en el conteo de evaluaciones.
+* **Garantía de Integridad:** Consolidación de **661.889 registros únicos**, garantizando 0 errores de clave foránea (*Foreign Keys*) al cargar la tabla de hechos `Fact_ResultadosSaber11`.
 
-### 4. Validación Final y Carga
-* Re-verificación del reporte de nulos (confirmando **0 nulos** en las columnas procesadas).
-* Preparación de las tablas de dimensiones y hechos para su posterior exportación a la base de datos relacional y herramientas de Business Intelligence (BI).
+### 4. Carga e Integración en Data Warehouse
+* **Verificación de Calidad:** Re-verificación del reporte de nulos (confirmando **0 nulos** en variables críticas) y validación de tipos de datos previo al cargue.
+* **Carga Idempotente:** Inserción de datos hacia el Data Warehouse en MySQL 8.0 mediante sentencias `INSERT IGNORE`, garantizando la reejecución segura del script sin duplicación de registros.
+* **Poblado del Modelo Estrella:** Carga relacional de las 4 tablas de dimensiones (`dim_colegio`, `dim_ubicacion`, `dim_socioeconomica`, `dim_tiempo`) y la tabla de hechos (`Fact_ResultadosSaber11`), garantizando integridad referencial perfecta (0 errores en *Foreign Keys*).
 
 ### 5. Instrucciones de Ejecución (Despliegue)
 
