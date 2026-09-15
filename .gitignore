@@ -1,0 +1,30 @@
+# Entorno / credenciales
+.env
+data/
+# Datos (no se suben CSVs pesados al repo)
+data/raw/*.csv
+data/raw/*.CSV
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs y reportes generados
+logs/*.log
+reports/*.csv
+reports/*.md
+!reports/.gitkeep
+
+# Jupyter
+.ipynb_checkpoints/
+
+# SO / editor
+.DS_Store
+.vscode/
+.idea/
+
+.env
+data/
+*.csv

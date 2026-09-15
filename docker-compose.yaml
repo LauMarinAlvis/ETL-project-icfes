@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  mysql_dw:
+    image: mysql:8.0
+    container_name: saber11_dw
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-icfes_db}
+      MYSQL_USER: ${DB_USER:-etl_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-etl_password}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - saber11_mysql_data:/var/lib/mysql
+      # Los .sql en esta carpeta se ejecutan SOLO la primera vez que se crea el volumen
+      - ./sql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  saber11_mysql_data:
