@@ -29,8 +29,8 @@ El procesamiento transforma el dataset plano original en las siguientes estructu
 ---
 ### **Esquema Estrella - Tabla de Hechos y Dimensiones**
 
-![Esquema Estrella Mano](Esquema_project_ETL_1_ICFES_original.png)
-![Esquema Estrella Digitalizada](Esquema_project_ETL_1_ICFES.png)
+![Esquema Estrella Mano](documentos/imagenes/Esquema_project_ETL_1_ICFES_original.png)
+![Esquema Estrella Digitalizada](documentos/imagenes/Esquema_project_ETL_1_ICFES.png)
 
 ---
 
@@ -108,7 +108,7 @@ Definimos las 6 relaciones clave entre variables socioeconómicas, institucional
 1. Usamos la relación de **Estrato Socioeconómico vs. Puntaje Global**, cruzamos las variables FAMI_ESTRATOVIVIENDA y PUNT_GLOBAL para ayudarnos a entender ¿Cómo varía el promedio del puntaje global a medida que se incrementa el estrato de la vivienda del estudiante?: la inclusión de este análisis permite establecer la línea base fundamental para medir el impacto y la desigualdad económica directa sobre el rendimiento académico general en la región.
 
 Gráfica: Gráfico de barras con promedio y desviación estándar por estrato.
-![Grafica barras](media_puntajeGlobal_vs_estrato.png)
+![Grafica barras](documentos/imagenes/media_puntajeGlobal_vs_estrato.png)
 
 2. Usamos la relación de **Naturaleza del Colegio vs. Rendimiento Académico**, ruzamos las variables COLE_NATURALEZA y PUNT_GLOBAL para ayudarnos a entender ¿Cuál es la magnitud de la brecha de puntaje entre las instituciones públicas y privadas del departamento?: la inclusión de este análisis permite caracterizar la diferencia en el rendimiento del sistema educativo del Valle del Cauca según la administración del establecimiento.
 
