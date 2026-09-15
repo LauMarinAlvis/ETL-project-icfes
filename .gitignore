@@ -1,9 +1,10 @@
 # Entorno / credenciales
 .env
 data/
+
 # Datos (no se suben CSVs pesados al repo)
-data/raw/*.csv
-data/raw/*.CSV
+*.csv
+*.CSV
 
 # Python
 __pycache__/
@@ -24,7 +25,3 @@ reports/*.md
 .DS_Store
 .vscode/
 .idea/
-
-.env
-data/
-*.csv
